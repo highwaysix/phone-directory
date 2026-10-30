@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>國道公路警察局員工分機查詢系統</title>
+    <!-- 引入 Tailwind CSS 以進行簡潔專業的排版設計 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 確保字體適合中文閱讀 */
+        body {
+            font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen py-10 px-4 sm:px-6 lg:px-8">
+
+    <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden border-t-4 border-blue-500">
+        <!-- 標題區塊 -->
+        <div class="px-6 py-8 border-b border-gray-200 bg-blue-50">
+            <div class="flex flex-col md:flex-row justify-center items-baseline gap-2 md:gap-4 text-center md:text-left">
+                <h1 class="text-2xl md:text-3xl font-bold text-blue-800">
+                    國道公路警察局員工分機查詢系統
+                </h1>
+                <span class="text-sm text-gray-500 font-medium whitespace-nowrap">更新日期:115/10/30</span>
+            </div>
+            <p class="text-center text-blue-600 mt-2 text-sm">請點選單位按鈕或使用關鍵字搜尋</p>
+            
+            <!-- 新增搜尋列區塊 -->
+            <div class="mt-6 max-w-lg mx-auto flex gap-2">
+                <input type="text" id="searchInput" placeholder="請輸入姓名、職稱或分機..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <button id="searchBtn" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200 shadow-sm whitespace-nowrap">
+                    搜尋
+                </button>
+            </div>
+        </div>
+
+        <!-- 按鈕控制區塊 -->
+        <div class="px-6 py-6 border-b border-gray-100">
+            <div id="categoryContainer" class="space-y-5">
+                <!-- 分類與按鈕將由 JavaScript 動態生成 -->
+            </div>
+        </div>
+
+        <!-- 表格區塊 -->
+        <div class="px-6 pb-8 overflow-x-auto">
+            <!-- 新增目前顯示狀態標題 -->
+            <div id="currentViewTitle" class="py-4 text-lg font-bold text-gray-700 hidden">
+                目前顯示：
+            </div>
+
+            <table class="min-w-full leading-normal border-collapse border border-gray-200 rounded-lg hidden" id="contactTable">
+                <thead>
+                    <tr>
+                        <th class="px-5 py-3 border-b-2 border-blue-600 bg-blue-500 text-left text-sm font-bold text-white tracking-wider w-1/4">
+                            單位
+                        </th>
+                        <th class="px-5 py-3 border-b-2 border-blue-600 bg-blue-500 text-left text-sm font-bold text-white tracking-wider w-1/4">
+                            職稱
+                        </th>
+                        <th class="px-5 py-3 border-b-2 border-blue-600 bg-blue-500 text-left text-sm font-bold text-white tracking-wider w-1/4">
+                            姓名
+                        </th>
+                        <th class="px-5 py-3 border-b-2 border-blue-600 bg-blue-500 text-left text-sm font-bold text-white tracking-wider w-1/4">
+                            分機
+                        </th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    <!-- 資料將透過 JavaScript 動態載入 -->
+                </tbody>
+            </table>
+            
+            <!-- 初始/無資料時的提示訊息 -->
+            <div id="empty-state" class="text-center py-10 text-gray-500 bg-gray-50 rounded-lg border border-gray-200 border-dashed mt-4">
+                請點選上方單位按鈕，以顯示分機資訊。
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 內建的各單位資料物件 (依據需求設定範例資料與空陣列保留擴充性)
+        const departmentData = {'首長電話':[{title:'局長',name:'顏旺盛',ext:'2011~2'},{title:'副局長',name:'許芳毅',ext:'2015'},{title:'副局長',name:'王世芳',ext:'2016'},{title:'副局長',name:'陳永昌',ext:'2017'},{title:'主任秘書',name:'蔡啟仁',ext:'2018'},{title:'核稿秘書',name:'廖修鴻',ext:'2100'},{title:'隊長',name:'劉傑明',ext:'2013'},{title:'小隊長',name:'李國誠',ext:'2014'},{title:'交通助理員',name:'張麗華',ext:'2606'}],'後勤科':[{title:'科長',name:'梁建發',ext:'2080'},{title:'股長',name:'許百助',ext:'2081'},{title:'警務正',name:'李朋飛',ext:'2086'},{title:'警務正',name:'賴協駿',ext:'2092'},{title:'警務員',name:'陳婷文',ext:'2085'},{title:'技士',name:'徐士翔',ext:'2084'},{title:'技士',name:'羅彥群',ext:'2096'},{title:'技佐',name:'陳哲慶',ext:'2087'},{title:'技佐',name:'林祐陞',ext:'2513'},{title:'',name:'2082(後勤)',ext:''},{title:'辦事員',name:'洪淑慧',ext:'2098(被服室)'},{title:'辦事員',name:'謝宜蓁',ext:'2093'},{title:'警員',name:'謝政宗',ext:'2090'},{title:'交通助理員',name:'陳昭亨',ext:'2088'},{title:'',name:'2091(調度)',ext:''},{title:'交通助理員',name:'許雁智',ext:'2095(通訊)'},{title:'交通助理員',name:'楊連福',ext:'2083'},{title:'司機室',name:'',ext:'2501'},{title:'械彈室',name:'',ext:'2509~10'}],'人事室':[{title:'主任',name:'江伯晟',ext:'2140'},{title:'股長',name:'蘇頂傑',ext:'2141'},{title:'警務正',name:'吳道岳',ext:'2147'},{title:'科員',name:'陳宏諭',ext:'2143'},{title:'科員',name:'周宏霖',ext:'2144'},{title:'科員',name:'江振榕',ext:'2145'},{title:'科員',name:'林芳妤',ext:'2617'},{title:'警務佐',name:'劉愛華',ext:'2346'},{title:'辦事員',name:'郭昱堯',ext:'2148'},{title:'辦事員',name:'王郁婷',ext:'2343'},{title:'辦事員',name:'陳曉齊',ext:'2146'},{title:'警員',name:'許朝竣',ext:'2142'},{title:'人事資料室',name:'',ext:'2514'}],'主計室':[{title:'主任',name:'黃薏蒨',ext:'2130'},{title:'股長',name:'吉慧全',ext:'2131'},{title:'科員',name:'李宥心',ext:'2132'},{title:'科員',name:'林美妙',ext:'2134'},{title:'科員',name:'謝雲凱',ext:'2137'},{title:'科員',name:'詹紫伶',ext:'2138'},{title:'科員',name:'郭書暉',ext:'2139'},{title:'科員',name:'鄭雅文',ext:'2133'},{title:'科員',name:'游宗霖',ext:'2135'},{title:'辦事員',name:'李孟芹',ext:'2136'},{title:'辦事員',name:'楊小荷',ext:'2129'}],'保安隊':[{title:'隊長',name:'劉傑明',ext:'2150'},{title:'小隊長',name:'黃啟安',ext:'2152'},{title:'值勤台',name:'',ext:'2153'},{title:'服務台',name:'',ext:'2154'},{title:'文康中心',name:'',ext:'2156'},{title:'交誼廳',name:'',ext:'2219'},{title:'廚房',name:'',ext:'2157'},{title:'小餐廳',name:'',ext:'2158'}],'勤務寢室':[{title:'主任秘書',name:'',ext:'301, 2301'},{title:'核稿秘書',name:'',ext:'309, 2309'},{title:'勤指中心主任',name:'',ext:'303, 2310'},{title:'交通科科長',name:'',ext:'307, 2307'},{title:'後勤科科長',name:'',ext:'310, 2312'},{title:'人事室主任',name:'',ext:'306, 2306'},{title:'行政科科長',name:'',ext:'316, 2304'},{title:'督察長',name:'',ext:'302, 2302'},{title:'主計室主任',name:'',ext:'314, 2314'},{title:'保防室主任',name:'',ext:'312, 2303'},{title:'秘書室主任',name:'',ext:'305, 2305'},{title:'刑警大隊長',name:'',ext:'304, 2316'},{title:'刑警副大隊長',name:'',ext:'320, 2320'},{title:'刑警大隊備勤室',name:'',ext:'311, 2311'},{title:'刑警大隊備勤室',name:'',ext:'313, 2313'},{title:'刑警大隊備勤室',name:'',ext:'315, 2315'},{title:'刑警大隊備勤室',name:'',ext:'318, 2318'},{title:'刑警女警備勤室',name:'',ext:'2319'}],'勤指中心':[{title:'主任',name:'洪漢程',ext:'2110'},{title:'警務正',name:'李育儒',ext:''},{title:'警務正',name:'張銓宏',ext:'2001'},{title:'警務正',name:'孫人瑞',ext:'2001'},{title:'警務正',name:'陳弘凱',ext:''},{title:'警員',name:'謝永源',ext:''},{title:'警員',name:'曾清宇',ext:''},{title:'警員',name:'蔡乙誠',ext:'2000'},{title:'警員',name:'許芸嘉',ext:''},{title:'警員',name:'李孟勳',ext:'2099'},{title:'警務正',name:'陳瑞龍',ext:'2005'},{title:'警務正',name:'林明星',ext:'2003'},{title:'勤務備勤室',name:'',ext:'2008~9'}],'行政科':[{title:'科長',name:'洪俊義',ext:'2040'},{title:'股長',name:'王奕怜',ext:'2042'},{title:'警務正',name:'吳中閔',ext:'2046'},{title:'警務正',name:'張恩豪',ext:'2041'},{title:'警務正',name:'陳玠鴻',ext:'2047'}],'保防室':[{title:'主任',name:'廖修鴻',ext:'2100'},{title:'警務正',name:'何幸芝',ext:'2103'},{title:'警務員',name:'蘇子嘉',ext:'2101'},{title:'警務佐',name:'彭璟源',ext:'2104'}],'刑警大隊':[{title:'大隊長',name:'粘迪超',ext:'2160'},{title:'副大隊長',name:'張世賓',ext:'2161'},{title:'偵一隊 隊長',name:'顏志安',ext:'2162'},{title:'偵一隊 小隊長',name:'陳韋臣',ext:'2176'},{title:'偵一隊 偵查佐',name:'蕭儒庭',ext:'2174'},{title:'偵一隊 偵查佐',name:'葉承諭',ext:'2170'},{title:'偵一隊 警員',name:'紀盈慈',ext:'2165'},{title:'偵二隊 隊長',name:'馬中允',ext:'2167'},{title:'偵二隊 偵查員',name:'林志忠',ext:'2169'},{title:'偵二隊 小隊長',name:'黃聖育',ext:'2166'},{title:'偵二隊 小隊長',name:'陳健益',ext:'2173'},{title:'偵二隊 偵查佐',name:'林宗翰',ext:'2178'},{title:'偵三隊 隊長',name:'吳文成',ext:'2172'},{title:'偵三隊 小隊長',name:'曾明正',ext:'2164'},{title:'偵三隊 偵查佐',name:'吳郁櫛',ext:'2163'},{title:'偵三隊 警員',name:'蔡文馨',ext:'2171'},{title:'偵三隊 警員',name:'曾昱凱',ext:'2183'},{title:'科技犯罪偵查隊',name:'',ext:'2175, 2182'}],'職工':[{title:'技工',name:'陳明水',ext:'2601'},{title:'工友',name:'陳麗婷',ext:'2502(庫房), 2609'},{title:'工友',name:'陳淑玲',ext:'2612'},{title:'工友',name:'謝月嬌',ext:'2619'},{title:'工友',name:'陳秀金',ext:'2054'},{title:'工友',name:'林文智',ext:'2058'},{title:'工友',name:'陳惠香',ext:'2024, 2618, 2224'}],'資訊股':[{title:'股長',name:'林永翰',ext:'2222'},{title:'技佐',name:'龔利',ext:'2220'},{title:'警員',name:'蔡崑藝',ext:'2223, 2228'},{title:'警員',name:'黃貝絲',ext:'2227(庫房)'},{title:'資訊機房',name:'',ext:'2225'}],'秘書室':[{title:'主任',name:'李忠賢',ext:'2020'},{title:'警務正',name:'彭俊硯',ext:'2025'},{title:'警務正',name:'黃世耀',ext:'2056'},{title:'警務正',name:'劉基宏',ext:'2050'},{title:'警務員',name:'鍾琇媛',ext:'2021'},{title:'警務佐',name:'王文哲',ext:'2027'},{title:'警務佐',name:'陳信豪',ext:'2029'},{title:'警務佐',name:'陳旭淳',ext:'2022'},{title:'警務佐',name:'林俊輝',ext:'2023, 2059(文具室)'},{title:'辦事員',name:'沈玉玲',ext:'2057'},{title:'辦事員',name:'黃靖雯',ext:'2052'},{title:'書記',name:'莊君偉',ext:'2616'},{title:'警員',name:'楊凱伊',ext:'2607'},{title:'交通助理員',name:'傅寶麗',ext:'2053'},{title:'交通助理員',name:'林健翔',ext:'2028'},{title:'交通助理員',name:'蔡明慧',ext:'2055, 2613'}],'督訓科':[{title:'督察長',name:'黃益三',ext:'2030'},{title:'股長',name:'何育壽',ext:'2031'},{title:'督察員',name:'高俊雄',ext:'2034'},{title:'督察員',name:'李德賢',ext:'2336'},{title:'督察員',name:'李佩蓮',ext:'2033'},{title:'督察員',name:'李文哲',ext:'2339'},{title:'督察員',name:'梅賢齊',ext:'2032'},{title:'督察員',name:'林昶君',ext:'2035'},{title:'督察員',name:'楊醫隆',ext:'2337'},{title:'巡官',name:'張元盛',ext:'2037'},{title:'小隊長',name:'趙中豪',ext:'2036'},{title:'交通助理員',name:'柯慧芬',ext:'2038'},{title:'柔道場',name:'',ext:'2332'}],'交通科':[{title:'科長',name:'婁自強',ext:'2190'},{title:'股長',name:'陳文斌',ext:'2196'},{title:'股長',name:'陳秀玫',ext:'2392'},{title:'警務正',name:'林孟鋒',ext:'2193'},{title:'警務正',name:'林育德',ext:'2194'},{title:'警務正',name:'朱啟東',ext:'2197'},{title:'警務員',name:'林鍵智',ext:'2394'},{title:'警務員',name:'陳旺廷',ext:'2192'},{title:'辦事員',name:'沈杼錚',ext:'2195'},{title:'辦事員',name:'黃元鴻',ext:'2393'},{title:'交通助理員',name:'徐志勳',ext:'2198'},{title:'交通助理員',name:'許亦瑄',ext:'2391'},{title:'交通助理員',name:'黃群琪',ext:'2199'},{title:'庫房',name:'',ext:'2618, 2191'}],'其他':[{title:'一樓會議室_1',name:'',ext:'2503'},{title:'一樓會議室_2',name:'',ext:'2504'},{title:'二樓會議室_1',name:'',ext:'2111'},{title:'二樓會議室_2',name:'',ext:'2112'},{title:'三樓禮堂',name:'',ext:'2505'},{title:'三樓音控室',name:'',ext:'2506'},{title:'三樓交換機房',name:'',ext:'2258'},{title:'三樓警通所交換機房',name:'',ext:'2259'},{title:'三樓史蹟館',name:'',ext:'2507'},{title:'高速公路局',name:'警衛室',ext:'2909-6141轉3878'},{title:'值日室',name:'',ext:'2179'},{title:'偵詢室',name:'',ext:'2180'}]};
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const categoryContainer = document.getElementById('categoryContainer');
+            const tableElement = document.getElementById('contactTable');
+            const tableBody = document.getElementById('table-body');
+            const emptyState = document.getElementById('empty-state');
+            const searchInput = document.getElementById('searchInput');
+            const searchBtn = document.getElementById('searchBtn');
+            const currentViewTitle = document.getElementById('currentViewTitle');
+
+            let currentActiveButton = null;
+            let currentActiveDefaultClass = null;
+
+            // 定義按鈕基礎樣式
+            const baseClass = 'px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200 ease-in-out border focus:outline-none focus:ring-2 focus:ring-opacity-50';
+
+            // 依據您的需求設定各分類、對應顏色，以及底下的部門清單
+            const buttonCategories = [
+                { name: '2F', colorKey: 'blue', depts: ['首長電話', '後勤科', '人事室', '主計室', '保防室', '刑警大隊'] },
+                { name: '1F', colorKey: 'green', depts: ['勤指中心', '秘書室', '督訓科'] },
+                { name: '3F', colorKey: 'purple', depts: ['交通科', '行政科'] },
+                { name: 'B1', colorKey: 'orange', depts: ['保安隊'] },
+                { name: '其他', colorKey: 'gray', depts: ['職工', '勤務寢室', '資訊股', '其他'] } // 加入了原先有的資訊股，避免遺漏
+            ];
+
+            // 完整定義 Tailwind class，避免動態組字串被編譯器過濾掉樣式
+            const styles = {
+                blue: {
+                    badge: 'bg-blue-100 text-blue-800 border-blue-200',
+                    default: 'border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 focus:ring-blue-500',
+                    active: 'border-blue-600 bg-blue-600 text-white shadow-md focus:ring-blue-500'
+                },
+                green: {
+                    badge: 'bg-green-100 text-green-800 border-green-200',
+                    default: 'border-green-300 bg-green-50 text-green-700 hover:bg-green-100 focus:ring-green-500',
+                    active: 'border-green-600 bg-green-600 text-white shadow-md focus:ring-green-500'
+                },
+                purple: {
+                    badge: 'bg-purple-100 text-purple-800 border-purple-200',
+                    default: 'border-purple-300 bg-purple-50 text-purple-700 hover:bg-purple-100 focus:ring-purple-500',
+                    active: 'border-purple-600 bg-purple-600 text-white shadow-md focus:ring-purple-500'
+                },
+                orange: {
+                    badge: 'bg-orange-100 text-orange-800 border-orange-200',
+                    default: 'border-orange-300 bg-orange-50 text-orange-700 hover:bg-orange-100 focus:ring-orange-500',
+                    active: 'border-orange-600 bg-orange-600 text-white shadow-md focus:ring-orange-500'
+                },
+                gray: {
+                    badge: 'bg-gray-100 text-gray-800 border-gray-200',
+                    default: 'border-gray-300 bg-gray-50 text-gray-700 hover:bg-gray-100 focus:ring-gray-500',
+                    active: 'border-gray-600 bg-gray-600 text-white shadow-md focus:ring-gray-500'
+                }
+            };
+
+            // 1. 動態產生分類與內部按鈕
+            buttonCategories.forEach(cat => {
+                // 建立分類的外層容器
+                const section = document.createElement('div');
+                section.className = 'flex flex-col md:flex-row md:items-start gap-3 md:gap-4';
+
+                // 建立樓層/分類標題徽章
+                const titleBadge = document.createElement('div');
+                titleBadge.className = `shrink-0 px-3 py-1.5 rounded text-sm font-bold text-center w-16 border mt-0.5 ${styles[cat.colorKey].badge}`;
+                titleBadge.textContent = cat.name;
+
+                // 建立按鈕群組容器
+                const btnGroup = document.createElement('div');
+                btnGroup.className = 'flex flex-wrap gap-2 md:gap-3 flex-1';
+
+                cat.depts.forEach(dept => {
+                    // 若資料物件中尚未建立此部門，自動補上空陣列以免出錯
+                    if (!departmentData[dept]) departmentData[dept] = []; 
+
+                    const btn = document.createElement('button');
+                    btn.textContent = dept;
+                    btn.className = `${baseClass} ${styles[cat.colorKey].default}`;
+                    
+                    btn.addEventListener('click', () => {
+                        // 清空搜尋列
+                        searchInput.value = '';
+
+                        // 還原前一個選中按鈕的樣式
+                        if (currentActiveButton) {
+                            currentActiveButton.className = `${baseClass} ${currentActiveDefaultClass}`;
+                        }
+                        
+                        // 設定當前按鈕為選中樣式
+                        btn.className = `${baseClass} ${styles[cat.colorKey].active}`;
+                        
+                        // 記錄目前的按鈕與該顏色的預設樣式
+                        currentActiveButton = btn;
+                        currentActiveDefaultClass = styles[cat.colorKey].default;
+
+                        // 組合單位名稱並呼叫更新表格函數
+                        const mappedData = departmentData[dept].map(item => ({ department: dept, ...item }));
+                        updateTable(mappedData, `目前顯示單位：${dept}`);
+                    });
+                    
+                    btnGroup.appendChild(btn);
+                });
+
+                section.appendChild(titleBadge);
+                section.appendChild(btnGroup);
+                categoryContainer.appendChild(section);
+            });
+
+            // 處理搜尋邏輯
+            function handleSearch() {
+                const keyword = searchInput.value.trim().toLowerCase();
+                if (!keyword) return;
+
+                // 移除按鈕目前的選中狀態
+                if (currentActiveButton) {
+                    currentActiveButton.className = `${baseClass} ${currentActiveDefaultClass}`;
+                    currentActiveButton = null;
+                    currentActiveDefaultClass = null;
+                }
+
+                let results = [];
+
+                // 跨部門搜尋資料
+                for (const [deptName, employees] of Object.entries(departmentData)) {
+                    employees.forEach(emp => {
+                        const nameMatch = emp.name && emp.name.toLowerCase().includes(keyword);
+                        const titleMatch = emp.title && emp.title.toLowerCase().includes(keyword);
+                        const extMatch = emp.ext && String(emp.ext).toLowerCase().includes(keyword);
+
+                        if (nameMatch || titleMatch || extMatch) {
+                            results.push({ department: deptName, ...emp });
+                        }
+                    });
+                }
+
+                updateTable(results, `搜尋結果：「${keyword}」`);
+            }
+
+            // 綁定搜尋按鈕事件
+            searchBtn.addEventListener('click', handleSearch);
+
+            // 綁定 Enter 鍵觸發搜尋
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    handleSearch();
+                }
+            });
+
+            // 2. 更新表格的函數
+            function updateTable(data, titleText) {
+                // 清空目前的表格內容
+                tableBody.innerHTML = '';
+
+                // 更新標題顯示
+                currentViewTitle.textContent = titleText;
+                currentViewTitle.classList.remove('hidden');
+
+                // 顯示表格，隱藏初始提示區塊
+                tableElement.classList.remove('hidden');
+                emptyState.classList.add('hidden');
+
+                if (data && data.length > 0) {
+                    // 迴圈建立表格行 (tr) 與欄位 (td)
+                    data.forEach(item => {
+                        const tr = document.createElement('tr');
+                        // 加入 CSS 類別以實現條紋交錯與滑鼠懸停效果
+                        tr.className = 'border-b border-gray-200 hover:bg-blue-50 even:bg-gray-50 odd:bg-white transition-colors duration-150 ease-in-out';
+                        
+                        tr.innerHTML = `
+                            <td class="px-5 py-4 text-sm text-gray-900 whitespace-nowrap">${item.department || '-'}</td>
+                            <td class="px-5 py-4 text-sm text-gray-900">${item.title}</td>
+                            <td class="px-5 py-4 text-sm text-gray-900 font-medium">${item.name}</td>
+                            <td class="px-5 py-4 text-sm text-blue-700 font-semibold">${item.ext}</td>
+                        `;
+                        tableBody.appendChild(tr);
+                    });
+                } else {
+                    // 若無資料
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td colspan="4" class="px-5 py-8 text-center text-sm text-gray-500 bg-gray-50">
+                            找不到相符資料。
+                        </td>
+                    `;
+                    tableBody.appendChild(tr);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
